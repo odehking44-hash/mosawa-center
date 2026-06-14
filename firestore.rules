@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Standard Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity validator: Resume
+    function isValidResume(data) {
+      return data.keys().hasAll(['id', 'userId', 'fullName', 'email', 'updatedAt'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.fullName is string && data.fullName.size() <= 200
+        && data.email is string && data.email.size() <= 256
+        && data.phone is string && data.phone.size() <= 64
+        && data.location is string && data.location.size() <= 256
+        && data.linkedin is string && data.linkedin.size() <= 256
+        && data.summary is string && data.summary.size() <= 2000
+        && data.skills is list && data.skills.size() <= 50
+        && data.languages is list && data.languages.size() <= 10
+        && data.experience is list && data.experience.size() <= 30
+        && data.education is list && data.education.size() <= 15;
+    }
+
+    // Entity validator: Scan Evaluation
+    function isValidScan(data) {
+      return data.keys().hasAll(['id', 'userId', 'matchPercentage', 'analysis', 'createdAt'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.matchPercentage is int && data.matchPercentage >= 0 && data.matchPercentage <= 100
+        && data.analysis is string && data.analysis.size() <= 5000
+        && data.jobDescription is string && data.jobDescription.size() <= 8000
+        && data.resumeTitle is string && data.resumeTitle.size() <= 200
+        && data.strengthBulletPoints is list && data.strengthBulletPoints.size() <= 20
+        && data.missingKeywords is list && data.missingKeywords.size() <= 30
+        && data.optimizationRecommendations is list && data.optimizationRecommendations.size() <= 35;
+    }
+
+    // Entity validator: Inquiry
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['id', 'userId', 'userName', 'userEmail', 'serviceType', 'status', 'createdAt'])
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.userName is string && data.userName.size() <= 200
+        && data.userEmail is string && data.userEmail.size() <= 256
+        && data.userPhone is string && data.userPhone.size() <= 64
+        && data.serviceType is string && (data.serviceType == 'mock_interview' || data.serviceType == 'career_coaching' || data.serviceType == 'training_workshop')
+        && data.preferredDate is string && data.preferredDate.size() <= 128
+        && data.notes is string && data.notes.size() <= 1000
+        && data.status is string && (data.status == 'pending' || data.status == 'confirmed' || data.status == 'completed');
+    }
+
+    // Rules for Resume collection
+    match /resumes/{resumeId} {
+      allow get: if isSignedIn() && isOwner(resource.data.userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn()
+        && isValidId(resumeId)
+        && isValidResume(request.resource.data)
+        && isOwner(request.resource.data.userId);
+        
+      allow update: if isSignedIn()
+        && isValidId(resumeId)
+        && isValidResume(request.resource.data)
+        && isOwner(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.id == resource.data.id;
+        
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    // Rules for Scans collection
+    match /scans/{scanId} {
+      allow get: if isSignedIn() && isOwner(resource.data.userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn()
+        && isValidId(scanId)
+        && isValidScan(request.resource.data)
+        && isOwner(request.resource.data.userId);
+        
+      allow update: if false; // Scans are immutable historical logs
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    // Rules for Service Inquiries collection
+    match /inquiries/{inquiryId} {
+      allow get: if isSignedIn() && isOwner(resource.data.userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn()
+        && isValidId(inquiryId)
+        && isValidInquiry(request.resource.data)
+        && isOwner(request.resource.data.userId);
+        
+      allow update: if isSignedIn()
+        && isValidId(inquiryId)
+        && isValidInquiry(request.resource.data)
+        && isOwner(resource.data.userId)
+        // Prevent users from tampering with administrative status updates directly
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) 
+            || request.resource.data.status == resource.data.status);
+            
+      allow delete: if isSignedIn() && isOwner(resource.data.userId);
+    }
+
+    // Public test point (read-only verification check used inside skill)
+    match /test/connection {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

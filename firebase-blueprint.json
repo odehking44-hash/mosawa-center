@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "Resume": {
+      "title": "Resume",
+      "description": "Represents an ATS-optimized user resume generated via the Builder",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique resume ID identifier" },
+        "userId": { "type": "string", "description": "Owner user UID reference" },
+        "fullName": { "type": "string", "description": "User's full name" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "summary": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "experience": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "company": { "type": "string" },
+              "duration": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "education": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "degree": { "type": "string" },
+              "school": { "type": "string" },
+              "year": { "type": "string" },
+              "details": { "type": "string" }
+            }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "fullName", "email", "updatedAt"]
+    },
+    "Scan": {
+      "title": "Scan",
+      "description": "Represents an ATS Resume Scan & match audit result with Gemini feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "resumeTitle": { "type": "string" },
+        "jobDescription": { "type": "string" },
+        "matchPercentage": { "type": "integer" },
+        "analysis": { "type": "string" },
+        "strengthBulletPoints": { "type": "array", "items": { "type": "string" } },
+        "missingKeywords": { "type": "array", "items": { "type": "string" } },
+        "optimizationRecommendations": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "matchPercentage", "analysis", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Represents a user booking inquiry for physical services (interview simulations, coaching, classes)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userPhone": { "type": "string" },
+        "serviceType": { "type": "string", "enum": ["mock_interview", "career_coaching", "training_workshop"] },
+        "preferredDate": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "userName", "userEmail", "serviceType", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "resumes/{resumeId}": {
+      "schema": "Resume",
+      "description": "Collection of resumes created by authenticated community seekers"
+    },
+    "scans/{scanId}": {
+      "schema": "Scan",
+      "description": "Collection of ATS keyword scans and audits evaluated by AI models"
+    },
+    "inquiries/{inquiryId}": {
+      "schema": "Inquiry",
+      "description": "Collection of simulation and placement session assistance reservation requests"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-arabic: "Cairo", "Inter", system-ui, sans-serif;
+  
+  --color-brand-navy: #002060;
+  --color-brand-blue: #0f4c81;
+  --color-brand-sky: #e6f0fa;
+  --color-brand-accent: #3b82f6;
+  --color-brand-dark: #0b1a30;
+}
+
+/* Dynamically adjust global typography based on the language direction attribute */
+html[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
+
+html[dir="ltr"] {
+  font-family: var(--font-sans);
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth glass effect helper */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}

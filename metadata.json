@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Mossawah Center",
+  "description": "The official website of Mossawah Center for Civil Society Development in Jordan, highlighting youth, women, and refugee economic empowerment programs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
